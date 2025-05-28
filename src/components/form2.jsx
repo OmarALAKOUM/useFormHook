@@ -1,93 +1,65 @@
-import React, { useEffect, useState } from 'react';
 import useForm2 from '../hooks/useForm2';
+import {useState, useEffect} from 'react'
+
+const fieldConfig = [
+  { field: "name", label: "Name", type: "text" },
+  { field: "email", label: "Email", type: "email" },
+  { field: "subscribed", label: "Subscribed", type: "checkbox" },
+];
 
 const Form2 = () => {
   const {
-    values,
-    handleChange,
+    inputProps,
     isDirty,
     setInitialValues,
-  } = useForm2({
-    name: '',
-    email: '',
-    subscribed: false,
-  });
-
-  const [userLoaded, setUserLoaded] = useState(false);
+    updatedValues,
+    values,
+  } = useForm2(fieldConfig);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const fakeUser = {
-        name: 'omar',
-        email: 'omar@example.com',
-        subscribed: true,
-      };
-
-      setTimeout(() => {
-        setInitialValues(fakeUser);
-        setUserLoaded(true);
-      }, 1000);
+    const fakeUser = {
+      name: "omar",
+      email: "omar@example.com",
+      subscribed: true,
     };
 
-    loadUser();
+    setTimeout(() => {
+      setInitialValues(fakeUser);
+    }, 1000);
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('Form submitted:\n' + JSON.stringify(values, null, 2));
-    setInitialValues(values); 
+     alert('Form submitted:\n' + JSON.stringify(values, null, 2));
+    alert("Updated:\n" + JSON.stringify(updatedValues, null, 2));
+    setInitialValues(values);
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px' }}>
+    <form onSubmit={handleSubmit}>
       <h2>User Settings</h2>
+      {fieldConfig.map(({ field, label, type }) => (
+        <div key={field}>
+          <label>
+            {type === "checkbox" ? (
+              <>
+                <input {...inputProps[field]} />
+                {label}
+              </>
+            ) : (
+              <>
+                {label}:
+                <input {...inputProps[field]} style={{ width: "100%" }} />
+              </>
+            )}
+          </label>
+        </div>
+      ))}
 
-      {!userLoaded ? (
-        <p>Loading user...</p>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Name:</label>
-            <input
-              name="name"
-              value={values.name || ''}
-              onChange={handleChange}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Email:</label>
-            <input
-              name="email"
-              type="email"
-              value={values.email || ''}
-              onChange={handleChange}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label>
-              <input
-                name="subscribed"
-                type="checkbox"
-                checked={values.subscribed || false}
-                onChange={handleChange}
-              />
-              Subscribed to newsletter
-            </label>
-          </div>
-
-          <button type="submit" disabled={!isDirty}>
-            Save Changes
-          </button>
-
-          {!isDirty && <p style={{ color: 'gray' }}>No changes yet.</p>}
-        </form>
-      )}
-    </div>
+      <button type="submit" disabled={!isDirty}>
+        Save Changes
+      </button>
+    </form>
   );
 };
-
 export default Form2;

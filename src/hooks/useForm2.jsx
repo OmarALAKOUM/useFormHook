@@ -1,43 +1,63 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo } from "react";
 
-const useForm2 = (initialValues = {}) => {
-  const [values, setValues] = useState(() => ({ ...initialValues }));
-  const [isDirty, setIsDirty] = useState(false);
-  const initialRef = useRef({ ...initialValues });
+const useForm2 = (fieldConfig) => {
+  const initial = fieldConfig.reduce((acc, field) => {
+    acc[field.field] = field.type === "checkbox" ? false : "";
+    return acc;
+  }, {});
+
+  const [values, setValues] = useState(initial);
+  const [initialValues, setInitialValuesState] = useState(initial);
 
   const handleChange = (e) => {
-    const { name, type, value, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-
+    const { name, value, type, checked } = e.target;
     setValues((prev) => ({
       ...prev,
-      [name]: newValue,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // useEffect(() => {
-  //   const dirty = Object.keys(values).some(
-  //     (key) => values[key] !== initialRef.current[key]
-  //   );
-  //   setIsDirty(dirty);
-  // }, [values]);
-  useEffect(() => {
-  const dirty = JSON.stringify(values) !== JSON.stringify(initialRef.current);
-  setIsDirty(dirty);
-}, [values]);
-
-  const setInitialValues = (newInitials) => {
-    const clone = { ...newInitials };
-    initialRef.current = clone;
-    setValues(clone);
-    setIsDirty(false);
+  const setInitialValues = (newValues) => {
+    setInitialValuesState({ ...newValues });
+    setValues({ ...newValues });
   };
+
+  const isDirty = useMemo(() => {
+    return Object.keys(values).some(
+      (key) => JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])
+    );
+  }, [values, initialValues]);
+
+  const updatedValues = useMemo(() => {
+    const changed = {};
+    for (const key in values) {
+      if (JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])) {
+        changed[key] = values[key];
+      }
+    }
+    return changed;
+  }, [values, initialValues]);
+
+  const inputProps = useMemo(() => {
+    const props = {};
+    for (const { field, type } of fieldConfig) {
+      props[field] = {
+        name: field,
+        type,
+        value: type === "checkbox" ? undefined : values[field],
+        checked: type === "checkbox" ? values[field] : undefined,
+        onChange: handleChange,
+      };
+    }
+    return props;
+  }, [values, fieldConfig]);
 
   return {
     values,
     handleChange,
-    setValues,
+    inputProps,
     isDirty,
+    updatedValues,
     setInitialValues,
   };
 };
