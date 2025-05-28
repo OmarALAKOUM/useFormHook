@@ -1,44 +1,45 @@
-import React, { useEffect, useState } from 'react';
 import useForm2 from '../hooks/useForm2';
 
 const Form2 = () => {
-  const { values, handleChange, isDirty, setInitialValues } = useForm2({
-    name: '',
-    email: '',
-    subscribed: false,
+  const { values, handleChange, isDirty, setInitialValues,updatedValues, } = useForm2({
+    name: 'omar',
+    email: 'omar@example.com',
+    subscribed: true,
   });
 
-  const [userLoaded, setUserLoaded] = useState(false);
+  // const [userLoaded, setUserLoaded] = useState(false);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const fakeUser = {
-        name: 'omar',
-        email: 'omar@example.com',
-        subscribed: true,
-      };
+  // useEffect(() => {
+  //   const loadUser = async () => {
+  //     const fakeUser = {
+  //       name: 'omar',
+  //       email: 'omar@example.com',
+  //       subscribed: true,
+  //     };
 
-      setTimeout(() => {
-        setInitialValues(fakeUser);
-        setUserLoaded(true);
-      }, 1000);
-    };
+  //     setTimeout(() => {
+  //       setInitialValues(fakeUser);
+  //       setUserLoaded(true);
+  //     }, 1000);
+  //   };
 
-    loadUser();
-  }, []);
+  //   loadUser();
+  // }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     alert('Form submitted:\n' + JSON.stringify(values, null, 2));
-    setInitialValues(values); // reset dirty state
+    alert ('Update Values' + JSON.stringify(updatedValues,null,2));
+    setInitialValues(values); 
   };
 
   return (
     <div style={{ maxWidth: '400px' }}>
       <h2>User Settings</h2>
-      {!userLoaded ? (
-        <p>Loading user...</p>
-      ) : (
+      {//!userLoaded ? (
+       // <p>Loading user...</p>
+     // ) : 
+     (
         <form onSubmit={handleSubmit}>
           <div>
             <label>Name:</label>
