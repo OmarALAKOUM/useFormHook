@@ -2,12 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useForm2 from '../hooks/useForm2';
 
 const Form2 = () => {
-  const {
-    values,
-    handleChange,
-    isDirty,
-    setInitialValues,
-  } = useForm2({
+  const { values, handleChange, isDirty, setInitialValues } = useForm2({
     name: '',
     email: '',
     subscribed: false,
@@ -35,18 +30,17 @@ const Form2 = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     alert('Form submitted:\n' + JSON.stringify(values, null, 2));
-    setInitialValues(values); 
+    setInitialValues(values); // reset dirty state
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px' }}>
+    <div style={{ maxWidth: '400px' }}>
       <h2>User Settings</h2>
-
       {!userLoaded ? (
         <p>Loading user...</p>
       ) : (
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
+          <div>
             <label>Name:</label>
             <input
               name="name"
@@ -56,7 +50,7 @@ const Form2 = () => {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div>
             <label>Email:</label>
             <input
               name="email"
@@ -67,7 +61,7 @@ const Form2 = () => {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div>
             <label>
               <input
                 name="subscribed"
@@ -79,11 +73,19 @@ const Form2 = () => {
             </label>
           </div>
 
-          <button type="submit" disabled={!isDirty}>
+          <button
+            type="submit"
+            
+            disabled={!isDirty}
+          >
             Save Changes
           </button>
 
-          {!isDirty && <p style={{ color: 'gray' }}>No changes yet.</p>}
+          {!isDirty && (
+            <p style={{ color: 'gray', marginTop: '0.5rem' }}>
+              No changes yet.
+            </p>
+          )}
         </form>
       )}
     </div>
