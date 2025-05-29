@@ -1,26 +1,69 @@
-import useForm2 from '../hooks/useForm2';
-import {useState, useEffect} from 'react'
-
+import useForm2 from "../hooks/useForm2";
+import { useEffect } from "react";
+import TestRefreshInput from "./TestRefreshInput";
+import DynamicField from "./DynamicFields";
+import { z } from "zod";
 const fieldConfig = [
-  { field: "name", label: "Name", type: "text" },
-  { field: "email", label: "Email", type: "email" },
-  { field: "subscribed", label: "Subscribed", type: "checkbox" },
+  {
+    field: "name",
+    label: "Name",
+    type: "text",
+    validation: z.string().min(4, "Name is required"),
+  },
+  {
+    field: "email",
+    label: "Email",
+    type: "email",
+    validation: z.string().email("Invalid email address"),
+  },
+  {
+    field: "subscribed",
+    label: "Subscribed",
+    type: "checkbox",
+    validation: z.boolean(),
+  },
+  {
+    field: "bio",
+    label: "Biography",
+    type: "textarea",
+    validation: z.string().optional(),
+  },
+  {
+    field: "role",
+    label: "Role",
+    type: "select",
+    options: ["User", "Admin", "Moderator"],
+    validation: z.enum(["User", "Admin", "Moderator"]),
+  },
 ];
+const generateZodSchema = (fields) => {
+  return z.object(
+    fields.reduce((acc, field) => {
+      acc[field.field] = field.validation;
+      return acc;
+    }, {})
+  );
+};
+
+const schema = generateZodSchema(fieldConfig);
 
 const Form2 = () => {
   const {
     inputProps,
     isDirty,
+    errors,
     setInitialValues,
     updatedValues,
     values,
-  } = useForm2(fieldConfig);
+  } = useForm2(fieldConfig, schema);
 
   useEffect(() => {
     const fakeUser = {
       name: "omar",
       email: "omar@example.com",
       subscribed: true,
+      bio:"S",
+      role:"Admin",
     };
 
     setTimeout(() => {
@@ -30,30 +73,26 @@ const Form2 = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-     alert('Form submitted:\n' + JSON.stringify(values, null, 2));
+     const result = schema.safeParse(values);
+    if (!result.success) {
+      alert("Form has validation errors.");
+      return;
+    }
     alert("Updated:\n" + JSON.stringify(updatedValues, null, 2));
+    alert("Values:\n" + JSON.stringify(values, null, 2));
     setInitialValues(values);
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <h2>User Settings</h2>
-      {fieldConfig.map(({ field, label, type }) => (
-        <div key={field}>
-          <label>
-            {type === "checkbox" ? (
-              <>
-                <input {...inputProps[field]} />
-                {label}
-              </>
-            ) : (
-              <>
-                {label}:
-                <input {...inputProps[field]} style={{ width: "100%" }} />
-              </>
-            )}
-          </label>
-        </div>
+      {fieldConfig.map((fieldDef) => (
+        <DynamicField
+          key={fieldDef.field}
+          fieldDef={fieldDef}
+          inputProps={inputProps}
+          error={errors[fieldDef.field]}
+        />
       ))}
 
       <button type="submit" disabled={!isDirty}>

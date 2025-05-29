@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 
-const useForm2 = (fieldConfig) => {
+const useForm2 = (fieldConfig, schema) => {
   const initial = fieldConfig.reduce((acc, field) => {
     acc[field.field] = field.type === "checkbox" ? false : "";
     return acc;
@@ -8,35 +8,30 @@ const useForm2 = (fieldConfig) => {
 
   const [values, setValues] = useState(initial);
   const [initialValues, setInitialValuesState] = useState(initial);
+  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setValues((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+    const newValue = type === "checkbox" ? checked : value;
 
-  const setInitialValues = (newValues) => {
-    setInitialValuesState({ ...newValues });
-    setValues({ ...newValues });
-  };
+    setValues((prev) => {
+      const updated = { ...prev, [name]: newValue };
 
-  const isDirty = useMemo(() => {
-    return Object.keys(values).some(
-      (key) => JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])
-    );
-  }, [values, initialValues]);
-
-  const updatedValues = useMemo(() => {
-    const changed = {};
-    for (const key in values) {
-      if (JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])) {
-        changed[key] = values[key];
+      const result = schema.safeParse(updated);
+      if (!result.success) {
+        const formatted = result.error.format();
+        setErrors(
+          Object.fromEntries(
+            Object.entries(formatted).map(([k, v]) => [k, v._errors?.[0]])
+          )
+        );
+      } else {
+        setErrors({});
       }
-    }
-    return changed;
-  }, [values, initialValues]);
+
+      return updated;
+    });
+  }, [schema]);
 
   const inputProps = useMemo(() => {
     const props = {};
@@ -50,14 +45,38 @@ const useForm2 = (fieldConfig) => {
       };
     }
     return props;
-  }, [values, fieldConfig]);
+  }, [values, handleChange, fieldConfig]);
+
+  const isDirty = useMemo(() => {
+    return Object.keys(values).some(
+      (key) =>
+        JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])
+    );
+  }, [values, initialValues]);
+
+  const updatedValues = useMemo(() => {
+    const changed = {};
+    for (const key in values) {
+      if (JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])) {
+        changed[key] = values[key];
+      }
+    }
+    return changed;
+  }, [values, initialValues]);
+
+  const setInitialValues = (newValues) => {
+    setInitialValuesState({ ...newValues });
+    setValues({ ...newValues });
+    setErrors({});
+  };
 
   return {
     values,
-    handleChange,
     inputProps,
+    errors,
     isDirty,
     updatedValues,
+    handleChange,
     setInitialValues,
   };
 };
